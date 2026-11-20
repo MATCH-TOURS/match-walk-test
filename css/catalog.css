@@ -1,0 +1,317 @@
+/* Каталог: карта города с метками прогулок, шторка прогулки, выбор города, список. Доска «Каталог · карта города». */
+.cat { position: absolute; inset: 0; z-index: 4; background: #EDE6D6; overflow: hidden; opacity: 0; transform: scale(1.05); pointer-events: none; transition: opacity .45s ease, transform .6s var(--sheet); }
+.cat.on { opacity: 1; transform: none; pointer-events: auto; }
+.cat.leave { transform: scale(1.5); opacity: 0; transition: opacity .5s ease, transform .7s var(--move); }
+
+.c-map { position: absolute; inset: 0; overflow: hidden; touch-action: none; transition: opacity .4s ease; }
+.c-pan { position: absolute; left: 0; top: 0; will-change: transform; transition: transform .7s var(--sheet); }
+.c-pan.drag { transition: none; }
+.c-pan > img { display: block; }
+.c-img { position: absolute; left: 0; top: 0; max-width: none; transition: opacity .4s ease; }
+.c-img.fresh { opacity: 0; }
+/* путь выбранной прогулки (20.11): виден, пока метка выбрана */
+.c-route { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity .35s ease; }
+.cat.picked .c-route.on { opacity: 1; }
+.c-map.zanim .c-route { transition: width .38s var(--sheet), height .38s var(--sheet), opacity .35s ease; }
+/* двойной тап: картинка, сдвиг и метки едут одной кривой — точка под пальцем стоит на месте */
+.c-map.zanim .c-pan { transition: transform .38s var(--sheet); }
+.c-map.zanim .c-img { transition: width .38s var(--sheet), height .38s var(--sheet), opacity .4s ease; }
+.c-map.zanim .c-pin, .c-map.zanim .c-you { transition: left .38s var(--sheet), top .38s var(--sheet); }
+.c-pin { position: absolute; width: 180px; margin: -34px 0 0 -90px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; pointer-events: none; }
+.c-pin > * { pointer-events: auto; }
+.c-pin svg { width: 28px; height: 36px; transform-origin: 50% 93%; transition: transform .5s var(--spring); filter: drop-shadow(0 2px 3px #28282840); }
+.c-pin.pressed svg { transform: scale(.9); }
+.c-pin b { padding: 3px 7px; border-radius: 2px; background: var(--j-bg); box-shadow: var(--j-ring); font: 500 11px/14px "Ferro Grotesk"; letter-spacing: .06em; text-transform: uppercase; color: var(--j-ink); white-space: nowrap; transition: opacity .3s ease, transform .4s var(--spring); }
+.cat.picked .c-pin b { opacity: 0; transform: translateY(-6px) scale(.9); }
+.c-pin.sel svg { transform: scale(1.58); }
+.c-pin.sel { z-index: 2; }
+/* 20.11 Андрей: у выбранного пина звёздочку прячем */
+.c-pin .pin-star { transition: opacity .2s ease; }
+.c-pin.sel .pin-star { opacity: 0; }
+/* backwards, не both: после падения анимация отпускает transform и opacity — иначе выбранный пин не увеличивался,
+   а подписи не прятались (20.11) */
+.c-pin.drop svg { animation: pin-drop .6s var(--spring) backwards; }
+.c-pin.drop b { animation: face-in .4s var(--spring) backwards; animation-delay: inherit; }
+@keyframes pin-drop { from { transform: translateY(-40px) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.c-you { position: absolute; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; background: #F2CF4A59; display: flex; align-items: center; justify-content: center; }
+.c-you i { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--ink-strong); }
+.c-you::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #F2CF4A; opacity: 0; }
+.c-you.ping::before { animation: ripple 1.2s ease-out 2; }
+
+.c-chip { position: absolute; height: 44px; border-radius: 22px; background: var(--j-bg); box-shadow: var(--j-chip); display: flex; align-items: center; justify-content: center; color: var(--j-ink); }
+.c-city { left: 16px; top: 60px; gap: 10px; padding: 0 14px 0 6px; font: 500 15px/20px "Ferro Grotesk"; letter-spacing: .06em; text-transform: uppercase; }
+.c-city svg:first-child { flex: none; }
+.c-prof { right: 16px; top: 60px; width: 44px; }
+/* кружок стиля карты под профилем (20.11): превью следующего стиля в белом ободке */
+.c-style { right: 16px; top: 116px; width: 44px; padding: 3px; transition: opacity .3s ease, transform .28s var(--spring); }
+.c-style i { display: block; width: 38px; height: 38px; border-radius: 50%; background: #E2D8C8 center / cover; box-shadow: inset 0 0 0 1px #28282826; }
+.c-style:active { transform: scale(.92); }
+.cat.list .c-style { opacity: 0; pointer-events: none; }
+/* 20.11: слои — под кружком стиля; скрытый слой гаснет и не ловит тапы */
+.c-layers { right: 16px; top: 172px; width: 44px; transition: opacity .3s ease, transform .28s var(--spring); }
+.c-layers:active { transform: scale(.92); }
+.cat.list .c-layers { opacity: 0; pointer-events: none; }
+.c-pin, .c-poi, .c-head { transition: opacity .3s ease; }
+.cat[data-layer="walks"] .c-poi, .cat[data-layer="walks"] .c-head,
+.cat[data-layer="extra"] .c-pin { opacity: 0; pointer-events: none; }
+.cat[data-layer="walks"] .c-poi *, .cat[data-layer="walks"] .c-head *, .cat[data-layer="extra"] .c-pin * { pointer-events: none !important; }
+.c-ctl { position: absolute; left: 16px; top: 764px; width: 358px; height: 52px; display: flex; align-items: center; justify-content: center; transition: transform .55s var(--sheet), opacity .3s ease; pointer-events: none; z-index: 3; }
+.c-ctl > * { pointer-events: auto; }
+.cat[data-sheet="peek"] .c-ctl { transform: translateY(var(--ctl-up, -278px)); }
+.cat[data-sheet="full"] .c-ctl { transform: translateY(var(--ctl-up, -278px)); opacity: 0; pointer-events: none; }
+.cat[data-sheet="full"] .c-ctl > * { pointer-events: none; }
+.c-seg { position: relative; display: flex; padding: 4px; border-radius: 999px; background: var(--j-bg); box-shadow: var(--j-chip); }
+.c-seg button { position: relative; z-index: 1; height: 40px; padding: 0 18px; border-radius: 20px; font: 500 15px/20px "Ferro Grotesk"; color: var(--j-ink); transition: color .3s ease; }
+.c-seg button.on { color: var(--paper); }
+.c-seg i { position: absolute; left: 4px; top: 4px; height: 40px; border-radius: 20px; background: var(--j-ink); transition: transform .45s var(--spring), width .45s var(--spring); }
+.c-loc { position: absolute; right: 0; top: 0; width: 52px; height: 52px; border-radius: 26px; background: var(--j-bg); box-shadow: var(--j-chip); display: flex; align-items: center; justify-content: center; transition: opacity .3s ease, transform .28s var(--spring); }
+.cat.list .c-loc { opacity: 0; pointer-events: none; }
+
+/* ---- список: журнальные строки с линейками, квадратные обложки */
+.c-list { position: absolute; inset: 0; background: var(--j-bg); opacity: 0; transform: translateY(24px); pointer-events: none; transition: opacity .35s ease, transform .5s var(--sheet); }
+.cat.list .c-list { opacity: 1; transform: none; pointer-events: auto; }
+.cat.list .c-map { opacity: 0; pointer-events: none; }
+.c-list h2 { position: absolute; left: 16px; top: 128px; width: 358px; margin: 0; padding-bottom: 8px; border-bottom: 1px solid var(--j-ink); font: 500 11px/14px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: var(--j-ink); }
+.c-sort { position: absolute; right: 16px; top: 125px; display: flex; align-items: center; gap: 6px; font: 500 11px/14px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: var(--j-muted); }
+.c-sort span { padding-right: 2px; }
+.c-sort button { padding: 3px 7px; border-radius: 2px; color: var(--j-muted); letter-spacing: inherit; text-transform: inherit; transition: color .2s ease, box-shadow .2s ease; }
+.c-sort { display: none; }   /* 19.11 Андрей: «убери это пока» — сортировка скрыта, список остаётся по удалённости */
+.c-sort button:last-child { padding-right: 0; }
+.c-sort button.on { color: var(--j-ink); box-shadow: var(--j-ring); }
+.c-sort button.on:last-child { padding-right: 7px; }
+/* выбрали прогулку — «Карта / Список» прячется, остаётся только «я здесь» (Андрей 19.11) */
+.c-seg { transition: opacity .25s ease, transform .35s var(--spring); }
+.cat[data-sheet="peek"] .c-seg { opacity: 0; transform: scale(.9); pointer-events: none; }
+.c-feed { position: absolute; left: 0; right: 0; top: 151px; bottom: 0; padding: 0 16px 130px; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; }
+.c-feed::-webkit-scrollbar { display: none; }
+.c-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(0deg, var(--j-bg) 30%, #F4F0E600 100%); pointer-events: none; }
+.c-card { flex: none; display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--j-hair); }
+.c-card .th { width: 84px; height: 84px; flex: none; background: #E6DCCB center / cover; }
+.c-card .th { position: relative; }
+.c-card .th-star { position: absolute; right: -6px; top: -6px; overflow: visible; }
+.c-card .tx { flex: 1; min-width: 0; height: 84px; display: flex; flex-direction: column; }
+.c-card .tx b { font: 500 15px/20px "Ferro Grotesk"; letter-spacing: .04em; text-transform: uppercase; color: var(--j-ink); }
+.c-card .tx > span { margin-top: 1px; font: 400 15px/21px "Ferro Grotesk"; color: var(--ink); }
+.c-card .tx div { margin-top: auto; display: flex; justify-content: space-between; align-items: baseline; font: 400 15px/21px "Ferro Grotesk"; color: var(--ink); }
+.c-card .tx div em { font-style: normal; font-weight: 500; color: var(--j-ink); }
+
+/* ---- шторка прогулки «Журнал» (19.11): пик → раскрыта → прокрутили (компактная шапка) */
+.c-dim { position: absolute; inset: 0; background: #1C1B19; opacity: 0; pointer-events: none; transition: opacity .5s ease; z-index: 4; }
+.cs { position: absolute; left: 0; top: 0; width: 390px; height: 844px; border-radius: 4px 4px 0 0; background: var(--j-bg); box-shadow: var(--j-ring); transform: translateY(860px); transition: transform .55s var(--sheet); z-index: 5; overflow: hidden; touch-action: none; }
+.cs.drag { transition: none; }
+.cs-grab { position: absolute; left: 177px; top: 8px; width: 36px; height: 5px; border-radius: 3px; background: #2828283D; z-index: 3; }
+.cs-x { display: none; }
+.j-rule { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 8px; white-space: nowrap; border-bottom: 1px solid var(--j-ink); font: 500 11px/14px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: var(--j-ink); }
+.cs-peek { position: absolute; left: 20px; top: 22px; width: 350px; display: flex; flex-direction: column; gap: 14px; transition: opacity .25s ease; }
+.cs-peek .row { display: flex; gap: 14px; min-height: 96px; }
+.cs-peek .th, .cs-top .th { width: 96px; height: 96px; flex: none; background: #E6DCCB 30% / cover; }
+.cs-peek .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+.cs-peek .tx b { font: 500 24px/26px "Ferro Grotesk"; letter-spacing: -.01em; text-transform: uppercase; color: var(--j-ink); }
+.cs-peek .tx span { font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+.cs-peek .start { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-top: 1px solid var(--j-hair); border-bottom: 1px solid var(--j-hair); }
+.cs-peek .start b { font: 500 15px/19px "Ferro Grotesk"; color: var(--j-ink); }
+.cs-peek .start span { flex: none; font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+
+.cs-full { position: absolute; left: 0; top: 0; width: 390px; height: 785px; padding: 26px 20px 120px; overflow-y: auto; scrollbar-width: none; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+.cs-full::-webkit-scrollbar { display: none; }
+.cs.full .cs-full { opacity: 1; pointer-events: auto; }
+.cs.full .cs-peek { opacity: 0; pointer-events: none; }
+.jf-head { display: flex; flex-direction: column; gap: 14px; }
+.jf-head h1 { margin: 0; font: 500 34px/36px "Ferro Grotesk"; letter-spacing: -.01em; text-transform: uppercase; color: var(--j-ink); }
+.jf-meta { display: flex; justify-content: space-between; gap: 12px; font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+.jf-cover { margin-top: 20px; width: 350px; height: 350px; background: #E6DCCB 30% / cover; }
+.jf-quote { padding-top: 36px; display: flex; flex-direction: column; gap: 20px; }
+.jf-quote p { margin: 0; font: 400 24px/30px "Ferro Grotesk"; letter-spacing: -.01em; color: var(--j-ink); }
+.jf-fly { display: flex; gap: 20px; padding-top: 16px; border-top: 1px solid var(--j-ink); }
+/* «Пластинка» — плеер фрагмента (как базовый плеер, 17.11) */
+.jf-rec { position: relative; flex: none; width: 156px; height: 192px; border-radius: 28px; background: var(--night); box-shadow: var(--j-ring); overflow: hidden; display: flex; flex-direction: column; }
+.jf-card { position: relative; flex: none; width: 156px; height: 156px; border-radius: 28px; background: var(--paper); box-shadow: 0 2px 6px #00000026; overflow: hidden; }
+.jf-disc { position: absolute; left: 12px; top: -44px; width: 132px; height: 132px; border-radius: 66px; overflow: hidden; box-shadow: 0 4px 10px #00000033; }
+.jf-disc s { position: absolute; inset: 0; background: #1C1B19 url(../assets/img/j/disc.jpg) 70% 45% / 200% no-repeat; filter: grayscale(1); }
+.cat.fplay .jf-disc s { animation: jf-spin 9s linear infinite; }
+@keyframes jf-spin { to { transform: rotate(360deg); } }
+.jf-disc em { position: absolute; left: 55px; top: 55px; width: 22px; height: 22px; border-radius: 11px; border: 2px solid var(--night); background: var(--paper-dim); display: flex; align-items: center; justify-content: center; }
+.jf-disc em::after { content: ""; width: 6px; height: 6px; border-radius: 3px; background: var(--night); }
+.jf-disc .pb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #1C1B1966; border-radius: 66px; transition: background-color .3s ease; }
+.cat.fplay .jf-disc .pb { background: #1C1B1900; }
+.jf-disc .pb b { position: relative; width: 40px; height: 40px; border-radius: 20px; background: var(--paper); box-shadow: 0 2px 6px #00000040; display: flex; align-items: center; justify-content: center; }
+.jf-disc .pb svg, .c-frag svg { position: absolute; transition: opacity .18s ease, transform .3s var(--spring); }
+.cat:not(.fplay) .i-pause, .cat.fplay .i-play { opacity: 0; transform: scale(.5); }
+.jf-lab { position: absolute; left: 0; top: 100px; width: 156px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 500 15px/19px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-lab i { width: 44px; height: 3px; border-radius: 2px; background: #CFC6B2; overflow: hidden; }
+.jf-lab i u { display: block; height: 3px; width: 0; background: var(--j-ink); }
+.jf-lab span { font-feature-settings: "tnum"; }
+.jf-steps { flex: none; height: 36px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; }
+.jf-steps button { width: 64px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.jf-steps i { width: 1px; height: 16px; background: #57544A; }
+.jf-nums { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.jf-nums > div { display: flex; flex-direction: column; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--j-hair); }
+.jf-nums > div:last-child { padding-bottom: 0; border-bottom: 0; }
+/* у прогулок без фрагмента цифры в строку (20.11) */
+.jf-nums-row { flex-direction: row; gap: 0; }
+.jf-nums-row > div { flex: 1; min-width: 0; padding: 0 12px 0 0; border-bottom: 0; }
+.jf-nums-row > div + div { padding-left: 12px; border-left: 1px solid var(--j-hair); }
+/* 20.11: «2,5–3 часа» наезжал на цену — b из .jf-nums (28px) перебивал размер; колонки по ширине содержимого */
+.jf-nums.jf-nums-row > div { flex: 1 1 auto; }
+.jf-nums.jf-nums-row b { font-size: 22px; line-height: 28px; white-space: nowrap; }
+.jf-nums b { font: 500 28px/32px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-nums span { font: 400 13px/16px "Ferro Grotesk"; color: var(--j-muted); }
+.jf-sec { padding-top: 44px; display: flex; flex-direction: column; gap: 12px; }
+.jf-pair { display: flex; align-items: flex-end; gap: 14px; }
+.jf-pair .cap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-bottom: 2px; }
+.jf-pair .cap b { font: 500 15px/19px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-pair .cap span { font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+/* ленты «Тогда» и «Отзывы» (19.11): кадр 196, следующий торчит справа на 24 px — видно, что листается */
+.jf-then, .jf-revs { align-items: stretch; margin-right: -20px; }
+.jf-then .cap, .jf-revs .cap { flex: none; width: 128px; justify-content: flex-end; }
+.jf-revs .cap { justify-content: flex-start; padding-top: 2px; }
+.jf-strip { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-right: 32px; cursor: grab; }
+.jf-strip::-webkit-scrollbar { display: none; }
+.jf-strip.drag { scroll-snap-type: none; cursor: grabbing; }
+.jf-strip > * { scroll-snap-align: start; flex: none; cursor: pointer; }
+.jf-ph { position: relative; width: 196px; height: 280px; background: #E6DCCB 50% / cover; }
+.jf-shot { width: 196px; height: auto; display: block; border-radius: 12px; box-shadow: 0 0 0 1px #2828281F; }
+.j-rule .jf-n { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; padding: 4px 0 4px 12px; margin: -4px 0; }
+.jf-route { cursor: zoom-in; }
+.jf-cover { cursor: zoom-in; }
+.jf-abc { margin-top: -12px; }
+.jf-abc > div { display: flex; padding: 12px 0; border-bottom: 1px solid var(--j-hair); font: 400 17px/22px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-abc i { width: 28px; flex: none; font-style: normal; font-weight: 500; }
+.jf-route { width: 350px; height: 290px; overflow: hidden; background: var(--paper-dim); }
+.jf-route img { width: 350px; height: 290px; display: block; object-fit: cover; }
+.jf-start { display: flex; flex-direction: column; gap: 14px; }
+.jf-start div { display: flex; flex-direction: column; gap: 4px; }
+.jf-start b { font: 500 15px/19px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-start span { font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+/* «Как добраться» — кнопка, не ссылка (19.11): контурная, на всю ширину */
+.jf-go { height: 48px; border-radius: 999px; box-shadow: inset 0 0 0 1px #282828; display: flex; align-items: center; justify-content: center; gap: 8px; font: 500 15px/20px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-go span { color: var(--j-ink); font: inherit; }
+.jf-know { margin-top: -12px; }
+.jf-know > div { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--j-hair); font: 400 15px/20px "Ferro Grotesk"; color: var(--j-ink); }
+.jf-know b { width: 152px; flex: none; font-weight: 500; display: flex; gap: 8px; align-items: flex-start; }
+.jf-know b svg { flex: none; }
+/* «Вдвоём»: кнопка покупки на двоих прямо в строке (19.11); жёлтый — только покупка */
+.jf-two { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.jf-buy2 { height: 36px; padding: 0 16px; border-radius: 999px; background: var(--accent); font: 500 15px/20px "Ferro Grotesk"; color: var(--j-ink); white-space: nowrap; }
+.jf-note { margin-top: 36px; padding: 16px 0; border-top: 1px solid var(--j-ink); border-bottom: 1px solid var(--j-hair); font: 400 15px/20px "Ferro Grotesk"; color: var(--j-muted); }
+
+/* в шапке рядом с ✕: первая надпись тянется, остальные прижаты к крестику */
+.j-rule:has(.cs-close) { padding-bottom: 6px; }
+.j-rule:has(.cs-close) > span:first-child { flex: 1; }
+.cs-close { flex: none; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--j-ink); display: flex; align-items: center; justify-content: center; }
+.cs.scrolled { border-radius: 0; }
+.cs.scrolled .cs-full { height: 844px; }
+/* компактная шапка, когда раскрытую шторку прокрутили ниже заголовка (макет «Шапка · компактная») */
+.cs-top { position: absolute; left: 0; top: 0; width: 390px; padding: 58px 20px 12px; background: var(--j-bg); border-bottom: 1px solid var(--j-ink); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 4; transform: translateY(-101%); transition: transform .4s var(--sheet); }
+.cs.full.scrolled .cs-top { transform: none; }
+.cs-top .r { width: 100%; display: flex; align-items: center; gap: 12px; }
+.cs-top b { flex: 1; min-width: 0; font: 500 14px/17px "Ferro Grotesk"; letter-spacing: .02em; text-transform: uppercase; color: var(--j-ink); }
+.cs-top .cs-buy { flex: none; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--accent); font: 500 15px/20px "Ferro Grotesk"; color: var(--j-ink); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.cs-top .cs-buy.free { background: var(--j-ink); color: var(--paper); }
+
+/* кнопки всегда внизу экрана: в пике стоят на шторке, в раскрытой — на своей полосе с чёрной линейкой */
+.c-buy { position: absolute; left: 0; bottom: 0; width: 390px; height: 94px; padding: 10px 20px 0; display: flex; align-items: flex-start; gap: 10px; z-index: 6; transform: translateY(110px); transition: transform .55s var(--sheet), background-color .3s ease, box-shadow .3s ease; }
+.cat[data-sheet="peek"] .c-buy, .cat[data-sheet="full"] .c-buy { transform: none; }
+.cat[data-sheet="full"] .c-buy { background: var(--j-bg); box-shadow: 0 -1px 0 var(--j-ink); }
+.cat[data-sheet="full"].scrolled .c-buy { transform: translateY(110px); }
+.c-buy button { height: 48px; border-radius: 24px; font: 500 16px/22px "Ferro Grotesk"; color: var(--j-ink); display: flex; align-items: center; justify-content: center; }
+.c-frag { flex: none; width: 48px; position: relative; box-shadow: inset 0 0 0 1px var(--j-ink); }
+.c-frag .i-play { margin-left: 3px; }
+.c-pay { flex: 1; background: var(--accent); overflow: hidden; position: relative; }
+.c-pay span, .cs-top .cs-buy span { transition: opacity .25s ease, transform .35s var(--spring); }
+.c-pay span.out, .cs-top .cs-buy span.out { opacity: 0; transform: translateY(-14px); position: absolute; }
+.c-pay span.pre, .cs-top .cs-buy span.pre { opacity: 0; transform: translateY(14px); position: absolute; }
+.c-pay.free { background: var(--j-ink); color: var(--paper); }
+/* куплено: кнопка чёрная «Начать прогулку» (19.11) */
+.c-pay.owned, .cs-top .cs-buy.owned { background: var(--j-ink); color: var(--paper); transition: background-color .35s ease, color .35s ease; }
+
+/* ---- шторка «Город» (макет «Город · журнал») */
+.sh-city { height: 404px; padding: 26px 20px 0; display: flex; flex-direction: column; }
+.sh-city h2 { margin: 0; padding-bottom: 8px; border-bottom: 1px solid var(--j-ink); font: 500 11px/14px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: var(--j-ink); }
+.ct-row { display: flex; align-items: center; gap: 14px; height: 96px; border-bottom: 1px solid var(--j-hair); cursor: pointer; }
+.ct-row:last-child { border-bottom: 0; cursor: default; }
+.ct-row .ph { width: 76px; height: 76px; flex: none; background: #E6DCCB 50% / cover; }
+.ct-row.soon .ph { opacity: .6; }
+.ct-row .tx { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ct-row b { font: 500 18px/22px "Ferro Grotesk"; letter-spacing: .04em; text-transform: uppercase; color: var(--j-ink); }
+.ct-row .tx > span { font: 400 13px/16px "Ferro Grotesk"; color: var(--j-ink); }
+.ct-row .tx > small { padding-top: 4px; font: 400 13px/16px "Ferro Grotesk"; color: var(--j-muted); }
+.ct-row.soon b, .ct-row.soon .tx > span { color: var(--j-muted); }
+.ct-row i { width: 28px; height: 28px; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--j-ink); display: flex; align-items: center; justify-content: center; flex: none; transition: background-color .25s ease, box-shadow .25s ease; }
+.ct-row i svg { opacity: 0; transform: scale(.4); transition: opacity .2s ease, transform .35s var(--spring); }
+.ct-row.on i { background: var(--j-ink); box-shadow: none; }
+.ct-row.on i svg { opacity: 1; transform: none; }
+.ct-row em { height: 22px; padding: 0 7px; border-radius: 2px; box-shadow: 0 0 0 1px var(--j-muted); display: flex; align-items: center; font: 500 11px/14px "Ferro Grotesk"; font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: var(--j-muted); }
+
+/* под ручкой раскрытой шторки текст не должен просвечивать при прокрутке */
+.cs.full::before { content: ""; position: absolute; left: 0; top: 0; width: 390px; height: 20px; background: var(--j-bg); z-index: 2; pointer-events: none; }
+
+/* скрытый каталог не ловит нажатия: иначе невидимые метки и «Карта / Список» перекрывают прогулку */
+.cat:not(.on), .cat:not(.on) *, .cat.leave, .cat.leave * { pointer-events: none !important; }
+
+/* ---- кружки стилей справа от телефона (19.11) — инструмент ведущего, как подсказки слева */
+/* 20.11: кружки справа от телефона сняты — стиль переключается кружком на самой карте */
+#mapstyles { display: none !important; }
+#mapstyles { position: fixed; left: calc(var(--phone-r, 75vw) + 56px); top: 50%; transform: translateY(-50%); z-index: 5; display: flex; flex-direction: column; gap: 10px; opacity: 0; pointer-events: none; transition: opacity .5s ease; }
+body.live.cat-on #mapstyles { opacity: 1; pointer-events: auto; }
+body.hud-off #mapstyles { opacity: 0; pointer-events: none; }
+.ms-k { font: 500 13px/16px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: #5A5449; margin-bottom: 6px; }
+.ms-b { outline: none; display: flex; align-items: center; gap: 14px; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; }
+.ms-b i { width: 52px; height: 52px; border-radius: 50%; flex: none; background: #3B3A30 center / cover; box-shadow: 0 0 0 1px #28282826; transition: box-shadow .25s ease, transform .3s var(--spring); }
+.ms-b:hover i { transform: scale(1.06); }
+.ms-b:active i { transform: scale(.94); }
+.ms-b.on i { box-shadow: 0 0 0 3px var(--site), 0 0 0 5px var(--ink-strong); }
+.ms-b span { font: 400 15px/20px "Ferro Grotesk"; color: var(--ink-strong); transition: color .2s ease; }
+.ms-b:hover span, .ms-b.on span { color: var(--ink-strong); }
+.ms-b.on span { font-weight: 500; }
+@media (max-width: 760px) { #mapstyles { display: none; } }
+
+/* ---- 20.11: стрит-арт, музеи, головы героев. Дополнительный слой тише прогулок: кружки меньше пинов,
+   приглушённые цвета (арт — глина, музеи — шалфей), без тяжёлой тени. Внимание — на тёмных пинах Match.
+   APCA белого значка на фоне: глина Lc 67, шалфей Lc 70 (иконки ≥ 45). */
+.c-poi { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: #B07A62; box-shadow: 0 0 0 1.5px #FFFCF5, 0 1px 2px #2828282E; display: grid; place-items: center; cursor: pointer; transition: transform .45s var(--spring), opacity .3s ease; }
+.c-poi svg { width: 14px; height: 14px; }
+.c-poi.k-museum { border-radius: 8px; background: #6E8783; }   /* музей отличается формой и цветом */
+.c-poi.sel { transform: scale(1.35); z-index: 2; }
+.c-map.zanim .c-poi, .c-map.zanim .c-head { transition: left .38s var(--sheet), top .38s var(--sheet), transform .45s var(--spring); }
+
+/* 20.11 Андрей: «уберём левитацию голов, пусть будут небольшими кружками с фото». Тап — рассказывает о себе */
+.c-head { position: absolute; width: 0; height: 0; z-index: 3; }
+.c-head s, .h-name { display: none; }
+.h-fl { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; cursor: pointer; }
+.h-ball { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center; filter: sepia(.25); box-shadow: 0 0 0 1.5px #FFFCF5, 0 1px 2px #2828282E; }
+/* говорит: вокруг фото расходятся круги, над ним — значок с волной и временем до конца */
+.c-head.talk .h-ball { animation: h-ring 1.3s ease-out infinite; }
+@keyframes h-ring { 0% { box-shadow: 0 0 0 1.5px #FFFCF5, 0 0 0 1.5px #28282866; } 100% { box-shadow: 0 0 0 1.5px #FFFCF5, 0 0 0 12px #28282800; } }
+.h-say { position: absolute; left: 0; top: -48px; display: flex; align-items: center; gap: 6px; padding: 5px 9px 5px 8px; border-radius: 13px; background: #282828; color: #FFFCF5; font: 500 11px/14px "Ferro Grotesk"; white-space: nowrap; cursor: pointer;
+  opacity: 0; transform: translate(-50%, 6px) scale(.85); transition: opacity .25s ease, transform .4s var(--spring); pointer-events: none; }
+.h-say em { font-style: normal; font-feature-settings: "tnum"; color: #CFC6B4; }
+.c-head.talk .h-say { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.h-wave { display: flex; align-items: center; gap: 2px; height: 12px; }
+.h-wave i { width: 2px; height: 12px; border-radius: 1px; background: #FFFCF5; transform: scaleY(.3); }
+.c-head.talk .h-wave i { animation: h-wv .8s ease-in-out infinite; }
+.h-wave i:nth-child(2) { animation-delay: -.15s !important; } .h-wave i:nth-child(3) { animation-delay: -.45s !important; }
+.h-wave i:nth-child(4) { animation-delay: -.3s !important; } .h-wave i:nth-child(5) { animation-delay: -.6s !important; }
+@keyframes h-wv { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+/* 20.11 головы гуляют по улицам (catalog.js stroll): место задаёт transform каждый кадр, без переходов и покачивания */
+.c-head { will-change: transform; }
+.c-map.zanim .c-head { transition: none; }
+@media (prefers-reduced-motion: reduce) { .c-head.talk .h-ball { animation: none; } }
+
+/* шторка арта и страница музея */
+.sh-poi { padding: 8px 0 0; }
+.sh-poi .po-in { max-height: 720px; overflow-y: auto; padding: 0 20px 28px; touch-action: pan-y; }
+.sh-poi .j-rule { margin-bottom: 10px; }
+.sh-poi h2 { margin: 0 0 4px; }
+.po-sub { font: 400 15px/20px "Ferro Grotesk"; color: var(--ink); margin-bottom: 14px; }
+.po-ph { height: 200px; border-radius: 2px; background-size: cover; background-position: center; box-shadow: var(--j-ring); cursor: zoom-in; }
+.sh-poi.museum .po-ph { height: 220px; }
+.po-cr { margin-top: 6px; font: 400 11px/14px "Ferro Grotesk"; color: var(--j-muted); }
+.po-tx { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.po-tx p, .po-sec p { margin: 0; font: 400 15px/21px "Ferro Grotesk"; color: var(--j-ink); }
+.po-sec { margin-top: 18px; }
+.po-addr { margin-top: 18px; display: flex; flex-direction: column; gap: 2px; }
+.po-addr b { font: 500 16px/21px "Ferro Grotesk"; color: var(--j-ink); }
+.po-addr span, .po-note { font: 400 13px/18px "Ferro Grotesk"; color: var(--j-muted); }
+.po-note { margin-top: 10px; }
+.sh-poi .po-go { margin-top: 18px; width: 100%; }

@@ -1,0 +1,78 @@
+/* Телефонная версия (20.11): экран приложения во всю ширину, без рамки, нарисованной статус-строки и подсказок ведущему.
+   Настоящая статус-строка iOS сверху — макет прижат к низу, его верхние ~50 px (место под нарисованную строку) уходят под неё. */
+html.mobile, html.mobile body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html.mobile body {
+  position: fixed; inset: 0; margin: 0; background: #F4F0E6 !important;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+html.mobile #sbar, html.mobile #island, html.mobile #homebar, html.mobile #hud,
+html.mobile #backdrop, html.mobile #ground-svg, html.mobile #actor-svg { display: none !important; }
+html.mobile #phone { border-radius: 0; box-shadow: none; }
+html.mobile #screen { border-radius: 0; clip-path: none; }
+[hidden] { display: none !important; }
+
+/* первый экран: установка и разрешения */
+#gate {
+  position: fixed; inset: 0; z-index: 1000; overflow: hidden; background: #F4F0E6; color: #282828;
+  font-family: "Ferro Grotesk", system-ui, sans-serif; transition: opacity .45s ease;
+}
+#gate .g-scroll {
+  position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: max(28px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) calc(max(28px, env(safe-area-inset-bottom)) + 84px) max(24px, env(safe-area-inset-left));
+}
+#gate .g-kick { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: #5A5449; margin-bottom: -2px; }
+#gate .g-result { display: flex; align-items: center; gap: 12px; margin-top: 4px; padding: 10px 14px 10px 10px; border-radius: 16px; background: #FFFCF5; }
+#gate .g-result figure { margin: 0; flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+#gate .g-result img { width: 44px; height: 44px; border-radius: 10px; display: block; box-shadow: 0 0 0 1px #2828281F; }
+#gate .g-result figcaption { font-size: 11px; line-height: 13px; }
+#gate .g-result p { font-size: 14px; line-height: 19px; }
+#gate .g-arrow {
+  position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: #282828; pointer-events: none; animation: g-bob 1.3s ease-in-out infinite;
+}
+#gate .g-arrow.is-right { right: 18px; align-items: flex-end; }
+#gate .g-arrow.is-right svg { margin-right: 10px; }
+#gate .g-arrow.is-center { left: 50%; translate: -50% 0; }
+#gate .g-arrow span { padding: 6px 11px; border-radius: 14px; background: #282828; color: #FFFCF5; font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap; }
+@keyframes g-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { #gate .g-arrow { animation: none; } }
+#gate.off { opacity: 0; pointer-events: none; }
+#gate .g-in { min-height: 100%; max-width: 340px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+#gate .g-logo { width: 60px; height: auto; display: block; color: #282828; }
+#gate .g-step { display: flex; flex-direction: column; gap: 10px; }
+#gate h1 { margin: 0; font-weight: 700; font-size: 24px; line-height: 28px; letter-spacing: -.01em; text-wrap: balance; }
+#gate p { margin: 0; font-size: 15px; line-height: 21px; }
+#gate .g-sub { color: #5A5449; font-size: 14px; line-height: 19px; margin-top: -4px; }
+#gate ol, #gate ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+#gate ol li { display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 20px; }
+#gate ol li span { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #282828; color: #FFFCF5; font-size: 12px; font-weight: 700; }
+#gate ol li em { font-style: normal; }
+#gate ol li svg { display: inline-block; width: 18px; height: 18px; vertical-align: -4px; margin: 0 1px; }
+#gate ul li { font-size: 14px; line-height: 19px; padding-left: 14px; position: relative; }
+#gate ul li::before { content: ""; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: #282828; }
+#gate .g-go { margin-top: 8px; height: 50px; border: 0; border-radius: 25px; background: #282828; color: #FFFCF5; font: 500 16px/20px "Ferro Grotesk", system-ui, sans-serif; }
+#gate .g-go:active { transform: scale(.97); }
+#gate .g-link { align-self: flex-start; margin-top: 2px; padding: 8px 0; border: 0; background: none; color: #282828; font: 500 15px/20px "Ferro Grotesk", system-ui, sans-serif; text-decoration: underline; text-underline-offset: 4px; }
+#gate .g-note { color: #5A5449; font-size: 13px; line-height: 18px; }
+
+#geo-dbg {
+  position: fixed; left: 8px; right: 8px; top: max(4px, env(safe-area-inset-top)); z-index: 900; cursor: pointer;
+  padding: 6px 10px; border-radius: 10px; background: rgba(20, 19, 17, .82); color: #FFFCF5; font: 12px/16px ui-monospace, Menlo, monospace;
+}
+
+/* подсказки на телефоне бывают длиннее строки — переносим */
+html.mobile .toast { white-space: normal; width: max-content; max-width: 330px; text-align: center; }
+
+/* ?m в браузере на компьютере: экран телефона по центру, вокруг тёмный фон */
+html.mobile.wide body { background: #2A2825 !important; }
+html.mobile.wide #phone, html.mobile.wide #screen { border-radius: 44px; }
+html.mobile.wide #screen { clip-path: inset(0 round 44px); }
+html.mobile.wide #gate { inset: auto; left: var(--app-x); top: var(--app-y); width: var(--app-w); height: var(--app-h); border-radius: 44px; }
+html.mobile.wide #geo-dbg { left: calc(var(--app-x) + 10px); right: auto; width: calc(var(--app-w) - 20px); top: calc(var(--app-y) + 14px); box-sizing: border-box; }
+html.mobile.wide .toast { max-width: 300px; }
+html.mobile.wide .ms-k { color: #CFC6B4; }
+html.mobile.wide .ms-b span, html.mobile.wide .ms-b:hover span, html.mobile.wide .ms-b.on span { color: #F0EADE; }
+html.mobile.wide .ms-b.on i { box-shadow: 0 0 0 3px #2A2825, 0 0 0 5px #F0EADE; }
+
+/* 20.11 Андрей: «фото можно крупнее, есть место до текста сверху» — до старта галерея поднимается к заголовку */
+html.mobile .walk[data-layout="far"] .w-gal { top: 528px; height: 208px; }

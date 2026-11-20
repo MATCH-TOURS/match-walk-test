@@ -1,0 +1,35 @@
+/* Финал прогулки (20.11): журнал, как полная шторка каталога. Жёлтый — только у покупки со скидкой. */
+.fin { position: absolute; inset: 0; z-index: 4; background: var(--j-bg); opacity: 0; transform: translateY(24px); pointer-events: none; transition: opacity .45s ease, transform .55s var(--sheet); }
+.fin.on { opacity: 1; transform: none; pointer-events: auto; }
+.fin-in { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; padding: 64px 20px 48px; scrollbar-width: none; }
+.fin-in::-webkit-scrollbar { display: none; }
+.fin-head { display: flex; flex-direction: column; gap: 14px; }
+.fin-head .j-rule { align-items: center; }
+.fin-head h1 { margin: 0; font: 500 34px/36px "Ferro Grotesk"; letter-spacing: -.01em; text-transform: uppercase; color: var(--j-ink); text-wrap: balance; }
+.fin-x { width: 28px; height: 28px; margin: -8px -4px -8px 0; display: flex; align-items: center; justify-content: center; }
+.fin-route { margin-top: 20px; }
+.fin-nums { margin-top: 16px; }
+.fin-p { margin: 0; font: 400 16px/22px "Ferro Grotesk"; color: var(--j-ink); }
+.fin-more { display: flex; flex-direction: column; }
+.fin-m { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--j-hair); }
+.fin-m:last-child { border-bottom: 0; padding-bottom: 0; }
+.fin-num { flex: none; width: 34px; font: 500 44px/40px "Ferro Grotesk"; color: var(--j-ink); }
+.fin-mt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.fin-mt h3 { margin: 0; font: 500 17px/21px "Ferro Grotesk"; letter-spacing: .02em; text-transform: uppercase; color: var(--j-ink); }
+.fin-mt p { margin: 0; font: 400 15px/20px "Ferro Grotesk"; color: var(--j-ink); }
+.fin-mt dl { margin: 4px 0 0; display: grid; grid-template-columns: 52px 1fr; gap: 3px 8px; font: 400 13px/17px "Ferro Grotesk"; }
+.fin-mt dt { color: var(--j-muted); }
+.fin-mt dd { margin: 0; color: var(--j-ink); }
+.fin .jf-go { text-decoration: none; }
+.fin-next { display: flex; gap: 14px; align-items: center; }
+.fin-th { flex: none; width: 88px; height: 88px; background: var(--paper-dim) 50% / cover; }
+.fin-nt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fin-nt > b { font: 500 17px/21px "Ferro Grotesk"; letter-spacing: .02em; text-transform: uppercase; color: var(--j-ink); }
+.fin-nt > span { font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+.fin-nt .fin-price { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+.fin-price b { font: 500 22px/26px "Ferro Grotesk"; color: var(--j-ink); }
+.fin-price s { font: 400 15px/20px "Ferro Grotesk"; color: var(--j-muted); }
+.fin-buy { height: 52px; border-radius: 26px; background: var(--accent); font: 500 16px/22px "Ferro Grotesk"; color: var(--j-ink); }
+.fin-buy:active, .fin .jf-go:active { transform: scale(.97); }
+.fin-note { margin-top: -4px; text-align: center; font: 400 13px/17px "Ferro Grotesk"; color: var(--j-muted); }
+.fin-home { margin-top: 36px; width: 100%; }

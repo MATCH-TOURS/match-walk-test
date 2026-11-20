@@ -1,0 +1,109 @@
+/* Match — прототип. Основа: токены, страница, телефон, интро, подсказки ведущему. */
+@font-face { font-family: "Ferro Grotesk"; src: url("../assets/fonts/FerroGrotesk-regular.ttf"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Ferro Grotesk"; src: url("../assets/fonts/FerroGrotesk-medium.ttf"); font-weight: 500; font-display: block; }
+@font-face { font-family: "Ferro Grotesk"; src: url("../assets/fonts/FerroGrotesk-bold.ttf"); font-weight: 700; font-display: block; }
+
+:root {
+  --paper: #FFFCF5; --paper-dim: #EDE6D6; --ground: #D9D0BE; --line: #CFC6B2;
+  --ink-strong: #282828; --ink: #464646; --muted: #6B6559;
+  --night: #1C1B19; --on-night: #F0EADE; --on-night-muted: #BFB8A5; --accent: #F2CF4A;
+  --board: #3B3A30; --site: #E2D8C8;
+  /* «Журнал» (19.11, UI (locked)): бумага, чёрная линейка, квадратные фото, заголовки капсом.
+     --paper остаётся: это текст на тёмных кнопках и обводка меток */
+  --j-bg: #F4F0E6; --j-ink: #282828; --j-muted: #5A5449; --j-hair: #28282833;
+  --j-ring: 0 0 0 1px #282828; --j-chip: 0 0 0 1px #282828, 0 4px 12px #2828281A;
+  /* кривые: «пружина» для того, что выезжает и садится, и «шторка» как в iOS */
+  --spring: cubic-bezier(.2, .9, .25, 1.08);
+  --sheet: cubic-bezier(.32, .72, 0, 1);
+  --move: cubic-bezier(.4, 0, .1, 1);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--site); color: var(--ink-strong);
+  font-family: "Ferro Grotesk", system-ui, sans-serif; font-size: 15px; line-height: 20px;
+  -webkit-font-smoothing: antialiased; font-synthesis: none;
+  user-select: none; -webkit-user-select: none; cursor: default;
+  transition: background-color 1.2s ease;
+}
+body.intro { background: var(--site); }
+body.intro.idle { cursor: pointer; }
+img { -webkit-user-drag: none; user-drag: none; max-width: none; }   /* карты шире экрана: общий сброс артефакта их не сжимает */
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+
+/* ---- фон вокруг телефона */
+#backdrop { position: fixed; inset: 0; overflow: hidden; opacity: 0; transition: opacity 1.4s ease; }
+body.live #backdrop { opacity: 1; }
+#backdrop .bd {
+  position: absolute; inset: -80px; background-size: cover; background-position: 50%;
+  filter: blur(46px) saturate(.85); opacity: 0; transition: opacity 1.6s ease; transform: scale(1.08);
+}
+#backdrop .bd.on { opacity: 1; }
+/* 19.11 Андрей: тёмный фон не нравится — светлый, в цвет интро; фото сцены лишь подкрашивает его */
+#backdrop .bd-shade { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 45%, #EDE6D8D9 0%, #E2D8C8F2 100%); }
+
+/* ---- земля интро */
+#ground-svg { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
+#ground-line { fill: none; stroke: #B3A78F; stroke-linecap: round; }
+#actor-svg { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: visible; }
+
+/* ---- телефон: рамка как на досках в Paper */
+#phone-pos { position: fixed; left: 0; top: 0; width: 390px; height: 844px; transform-origin: 0 0; will-change: transform; z-index: 10; }
+#phone {
+  position: absolute; inset: 0; border-radius: 48px; background: var(--ground);
+  box-shadow: 0 0 0 12px #141311, 0 0 0 13px #57544A;
+}
+#phone.buzz { animation: buzz .42s linear; }
+@keyframes buzz {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10% { transform: translate(-3px, 0) rotate(-.25deg); } 22% { transform: translate(3px, 0) rotate(.25deg); }
+  34% { transform: translate(-3px, 0) rotate(-.2deg); } 46% { transform: translate(2px, 0) rotate(.15deg); }
+  58% { transform: translate(-2px, 0); } 72% { transform: translate(1px, 0); } 86% { transform: translate(-1px, 0); }
+}
+#screen { position: absolute; inset: 0; border-radius: 48px; overflow: hidden; clip-path: inset(0 round 48px); background: var(--ground); isolation: isolate; }   /* clip-path: слои с transform иначе вылезают за скруглённые углы (19.11) */
+#app { position: absolute; inset: 0; opacity: 0; }
+#app.on { opacity: 1; transition: opacity .7s ease; }
+#splash { position: absolute; inset: 0; background: var(--ground); z-index: 20; transition: opacity .7s ease; }
+#splash.off { opacity: 0; pointer-events: none; }
+#splash-floor { position: absolute; left: 0; top: 572px; opacity: 0; transition: opacity .5s ease; }
+#splash-floor.on { opacity: 1; }
+#splash-floor line { stroke: #B9AE98; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 0 12; }
+
+#sbar { position: absolute; left: 0; top: 0; width: 390px; height: 62px; padding: 21px 24px 19px; display: flex; align-items: center; z-index: 30; pointer-events: none; color: #000; transition: color .35s ease; }
+#sbar .sb-time { flex: 1; text-align: center; font: 600 17px/22px system-ui, -apple-system, sans-serif; margin-right: 154px; }
+#sbar .sb-icons { flex: none; margin: 0 6px; fill: currentColor; }
+#sbar .sb-batt-o { stroke: currentColor; stroke-opacity: .35; }
+#sbar .sb-batt-c { fill-opacity: .35; }
+#phone.sb-light #sbar { color: #fff; }
+#island { position: absolute; left: 132px; top: 11px; width: 126px; height: 37px; border-radius: 999px; background: #0A0A09; z-index: 31; pointer-events: none; }
+#island i { position: absolute; right: 14px; top: 12px; width: 13px; height: 13px; border-radius: 50%; background: #1E1F26; }
+#homebar { position: absolute; left: 128px; bottom: 8px; width: 134px; height: 5px; border-radius: 999px; background: #000; z-index: 30; pointer-events: none; transition: background-color .35s ease; }
+#phone.sb-light #homebar, #phone.hb-light #homebar { background: #fff; }
+
+/* нажатие: всё, что можно трогать, чуть сжимается под пальцем */
+.tap { cursor: pointer; transition: transform .28s var(--spring), filter .2s ease, opacity .2s ease; }
+.tap.pressed { transform: scale(.94); filter: brightness(.94); transition-duration: .08s; }
+.tap.soft.pressed { transform: scale(.975); }
+
+/* ---- подсказки ведущему */
+#hud { position: fixed; left: 40px; bottom: 36px; width: 300px; z-index: 5; color: var(--ink-strong); opacity: 0; transition: opacity .8s ease; pointer-events: none; }
+body.live #hud { opacity: 1; pointer-events: auto; }
+body.hud-off #hud { opacity: 0; pointer-events: none; }
+.hud-step { margin-bottom: 20px; transition: opacity .3s ease; }
+.hud-kicker { font: 500 13px/16px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: #5A5449; margin-bottom: 8px; }
+.hud-title { font: 500 28px/32px "Ferro Grotesk"; letter-spacing: -.01em; color: var(--ink-strong); margin-bottom: 8px; }
+.hud-desc { font: 400 15px/21px "Ferro Grotesk"; color: var(--ink-strong); }
+#hud-walk { display: inline-flex; align-items: center; gap: 12px; height: 48px; padding: 0 10px 0 20px; border-radius: 24px; background: var(--ink-strong); color: var(--paper); font: 500 15px/20px "Ferro Grotesk"; margin-bottom: 18px; transition: transform .25s var(--spring), opacity .3s ease; }
+#hud-walk:active { transform: scale(.95); }
+#hud-walk[disabled] { opacity: .35; pointer-events: none; }
+#hud-walk kbd { background: var(--paper); color: var(--ink-strong); border-color: transparent; }
+kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 8px; border: 1px solid #A39C8A; font: 500 13px/1 "Ferro Grotesk"; color: var(--ink); }
+.hud-keys { font: 400 13px/26px "Ferro Grotesk"; color: #5A5449; }
+.hud-keys kbd { height: 22px; min-width: 22px; padding: 0 5px; font-size: 12px; }
+@media (max-width: 1100px) { #hud { left: 20px; width: 240px; } .hud-title { font-size: 22px; line-height: 26px; } }
+
+/* ?fast — проверка без переходов: сразу конечные состояния */
+html.fast *, html.fast *::before, html.fast *::after { transition-duration: 0s !important; transition-delay: 0s !important; animation-duration: 0s !important; animation-delay: 0s !important; }
+
+/* на узком экране подсказкам ведущего нет места */
+@media (max-width: 760px) { #hud { display: none; } }

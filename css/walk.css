@@ -1,0 +1,169 @@
+/* Экран прогулки: один экран на весь сценарий. Блоки не пересоздаются, а переезжают:
+   фото поднимается, карта съезжает в правый нижний угол, плитка слева меняет лицо. */
+.walk { position: absolute; inset: 0; background: var(--j-bg); transition: transform .5s var(--sheet), border-radius .5s var(--sheet), opacity .4s ease, filter .4s ease; transform-origin: 50% 40%; }
+.walk.back { transform: scale(.93) translateY(8px); border-radius: 36px; filter: brightness(.82); overflow: hidden; }
+.walk.gone { opacity: 0; transform: scale(.96); pointer-events: none; }
+
+.w-btn { position: absolute; display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 22px; background: var(--j-bg); box-shadow: var(--j-chip); color: var(--j-ink); font: 500 15px/20px "Ferro Grotesk"; }
+.w-x { left: 16px; top: 56px; width: 44px; transition: top .6s var(--move), transform .28s var(--spring), filter .2s; }
+.walk[data-layout="far"] .w-x, .walk[data-layout="far"] .w-go { top: 60px; }
+.w-go { right: 16px; top: 56px; gap: 8px; padding: 0 16px 0 14px; transition: top .6s var(--move), opacity .35s ease, transform .35s var(--spring), filter .2s; }
+.w-title { position: absolute; left: 72px; top: 56px; height: 44px; display: flex; align-items: center; font: 500 13px/16px "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; transition: opacity .35s ease, transform .45s var(--spring); }
+.w-pill { right: 16px; top: 56px; padding: 0 14px; font-weight: 400; color: var(--muted); transition: opacity .35s ease, transform .35s var(--spring), filter .2s; }
+.w-pill b { font: 500 17px/22px "Ferro Grotesk"; color: var(--ink-strong); display: inline-block; }
+.w-pill b.bump { animation: bump .5s var(--spring); }
+@keyframes bump { 0% { transform: translateY(8px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.walk:not([data-hdr="go"]) .w-go, .walk:not([data-hdr="walk"]) .w-pill { opacity: 0; transform: scale(.8); pointer-events: none; }
+.walk:not([data-hdr="walk"]) .w-title { opacity: 0; transform: translateX(-10px); }
+
+/* ---- фото */
+.w-gal { position: absolute; left: 0; top: 116px; width: 390px; height: 399px; transition: top .7s var(--move), height .7s var(--move); touch-action: pan-y; }
+.walk[data-layout="far"] .w-gal { top: 566px; height: 170px; }
+.g-nudge { position: absolute; inset: 0; }
+.g-nudge.go { animation: nudge 1.5s var(--move) .9s 2; }
+@keyframes nudge { 0%, 100% { transform: none; } 38% { transform: translateX(-44px); } 62% { transform: translateX(-44px); } }
+.g-track { position: absolute; left: 0; top: 0; height: 100%; width: 0; transition: transform .55s var(--sheet), opacity .4s ease; will-change: transform; }
+.g-track.drag { transition: opacity .4s ease; }
+.g-track.out { opacity: 0; }
+.g-track.in { animation: gal-in .55s var(--move) both; }
+@keyframes gal-in { from { opacity: 0; transform-origin: 195px 50%; scale: 1.04; } to { opacity: 1; scale: 1; } }
+.g-card { position: absolute; top: 0; height: 100%; border-radius: 0; overflow: hidden; background: var(--night); transition: left .7s var(--move), width .7s var(--move), transform .28s var(--spring); cursor: pointer; }
+.g-card.pressed { transform: scale(.985); }
+.g-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: object-position .7s var(--move); pointer-events: none; }
+.g-grad { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; background: linear-gradient(0deg, #1C1B19CC 0%, #1C1B1900 100%); pointer-events: none; }
+.g-chip, .g-count { position: absolute; top: 14px; padding: 3px 7px; border-radius: 2px; background: var(--j-bg); box-shadow: var(--j-ring); font: 500 11px/14px "Ferro Grotesk"; letter-spacing: .06em; text-transform: uppercase; color: var(--j-ink); transition: opacity .3s ease; }
+.g-chip { left: 14px; }
+.g-count { right: 14px; }
+.g-cap { position: absolute; left: 16px; right: 16px; bottom: 14px; display: flex; flex-direction: column; gap: 2px; pointer-events: none; }
+.g-cap b { font: 500 17px/22px "Ferro Grotesk"; color: var(--on-night); }
+.g-cap span { font: 400 13px/18px "Ferro Grotesk"; color: #E3DCCD; }
+.g-card:not(.cur) .g-chip, .g-card:not(.cur) .g-count { opacity: 0; }
+.g-hint { position: absolute; right: 12px; top: 180px; height: 40px; padding: 0 16px 0 12px; border-radius: 20px; background: var(--paper); box-shadow: 0 4px 12px #00000040; display: flex; align-items: center; gap: 8px; font: 500 15px/20px "Ferro Grotesk"; color: var(--ink-strong); transition: opacity .35s ease, transform .35s var(--spring); pointer-events: none; }
+.g-hint svg { animation: hint-arrows 1.5s ease-in-out infinite; }
+@keyframes hint-arrows { 0%, 100% { transform: none; } 50% { transform: translateX(-4px); } }
+.g-hint.off { opacity: 0; transform: translateX(-16px) scale(.9); }
+
+/* ---- заголовок под фото */
+.w-ttl { position: absolute; left: 24px; top: 535px; width: 342px; height: 60px; transition: top .7s var(--move); pointer-events: none; }
+.walk[data-layout="far"] .w-ttl { top: 458px; }
+.w-ttl-in { position: absolute; left: 0; top: 0; width: 100%; display: flex; flex-direction: column; gap: 2px; transition: opacity .3s ease, transform .45s var(--spring); }
+.w-ttl-in.out { opacity: 0; transform: translateY(-10px); }
+.w-ttl-in.pre { opacity: 0; transform: translateY(14px); transition: none; }
+.w-ttl h1 { margin: 0; font: 500 24px/28px "Ferro Grotesk"; letter-spacing: .02em; text-transform: uppercase; color: var(--ink-strong); text-wrap: balance; }
+.w-ttl p { margin: 0; font: 400 16px/22px "Ferro Grotesk"; color: var(--ink); }
+/* ↺ «Ещё раз» убран с макетов 19.11 (Андрей: «убери») */
+.w-replay { display: none !important; left: 330px; top: 540px; width: 44px; transition: opacity .3s ease, transform .4s var(--spring), filter .2s; }
+.w-replay.off { opacity: 0; transform: scale(.6) rotate(-90deg); pointer-events: none; }
+
+/* ---- кнопка «Как добраться» */
+.w-cta { position: absolute; left: 16px; top: 752px; width: 358px; height: 60px; border-radius: 30px; background: var(--ink-strong); color: var(--paper); display: flex; align-items: center; justify-content: center; gap: 10px; font: 500 17px/22px "Ferro Grotesk"; transition: opacity .35s ease, transform .5s var(--sheet), filter .2s; }
+.walk:not([data-layout="far"]) .w-cta { opacity: 0; transform: translateY(90px); pointer-events: none; }
+
+/* ---- плитка слева от карты */
+.w-tile { position: absolute; left: 16px; top: 612px; width: 156px; height: 192px; transition: opacity .4s ease, transform .6s var(--spring); }
+.walk[data-layout="far"] .w-tile { opacity: 0; transform: translateY(60px) scale(.9); pointer-events: none; }
+.t-face { position: absolute; inset: 0; transition: opacity .22s ease, transform .22s ease; }
+.t-face.in { animation: face-in .5s var(--spring) both; }
+@keyframes face-in { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
+.t-face.out { opacity: 0; transform: scale(.92); pointer-events: none; }
+.t-face.out.pressed { transform: scale(.92); }
+.t-dark { border-radius: 32px; background: var(--ink-strong); box-shadow: var(--j-ring); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: var(--paper); overflow: hidden; }
+.t-dark .t-top { display: flex; justify-content: space-between; align-items: flex-start; height: 46px; }
+.t-dark .t-txt { display: flex; flex-direction: column; gap: 6px; }
+.t-dark .t-txt b { font: 500 20px/24px "Ferro Grotesk"; }
+.t-dark .t-txt span { font: 400 13px/17px "Ferro Grotesk"; color: var(--on-night); white-space: nowrap; }
+.t-turn .t-txt { gap: 2px; }
+.t-turn .t-txt b { font: 500 26px/30px "Ferro Grotesk"; letter-spacing: -.01em; font-feature-settings: "tnum"; }
+.t-turn .t-txt span { font: 400 16px/21px "Ferro Grotesk"; color: var(--on-night-muted); }
+.t-turn svg { transition: transform .5s var(--spring); }
+.t-turn svg.flip { transform: scaleX(-1); }
+.t-ico { width: 40px; height: 40px; position: relative; }
+.t-ico svg { position: absolute; inset: 0; transition: opacity .25s ease, transform .5s var(--spring); }
+.t-ico svg.off { opacity: 0; transform: scale(.6) rotate(-40deg); }
+.t-round { width: 44px; height: 44px; border-radius: 22px; background: var(--paper); display: flex; align-items: center; justify-content: center; flex: none; }
+.t-num { width: 44px; height: 44px; border-radius: 22px; box-shadow: inset 0 0 0 2px var(--paper); display: flex; align-items: center; justify-content: center; font: 500 20px/24px "Ferro Grotesk"; flex: none; }
+.t-go .t-round svg { animation: go-arrow 1.6s ease-in-out infinite; }
+@keyframes go-arrow { 0%, 60%, 100% { transform: none; } 80% { transform: translateX(3px); } }
+.t-logo { width: 64px; height: 46px; }
+.t-actor { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+
+/* плеер «Пластинка» */
+.t-player { border-radius: 28px; background: var(--night); box-shadow: var(--j-ring); overflow: hidden; }
+.tp-card { position: absolute; left: 0; top: 0; width: 156px; height: 156px; border-radius: 28px; background: var(--paper); box-shadow: 0 2px 6px #00000026; overflow: hidden; }
+.tp-disc { position: absolute; left: 12px; top: -44px; width: 132px; height: 132px; border-radius: 66px; background: var(--night); box-shadow: 0 4px 10px #00000033; overflow: hidden; }
+.tp-spin { position: absolute; inset: 0; background-size: cover; background-position: 50%; animation: spin 9s linear infinite; animation-play-state: paused; }
+.t-player.playing .tp-spin { animation-play-state: running; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.tp-spin::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: repeating-radial-gradient(circle at 50% 50%, #00000000 0 5px, #0000001F 5px 6px); }
+.tp-hole { position: absolute; left: 55px; top: 55px; width: 22px; height: 22px; border-radius: 11px; border: 2px solid var(--night); background: var(--paper-dim); }
+.tp-play { position: absolute; left: 58px; top: 2px; width: 40px; height: 40px; border-radius: 20px; background: var(--paper); box-shadow: 0 2px 6px #00000040; display: flex; align-items: center; justify-content: center; }
+.tp-play svg { position: absolute; transition: opacity .18s ease, transform .3s var(--spring); }
+.tp-play .i-play { opacity: 0; transform: scale(.5); }
+.t-player:not(.playing) .tp-play .i-play { opacity: 1; transform: none; }
+.t-player:not(.playing) .tp-play .i-pause { opacity: 0; transform: scale(.5); }
+.tp-info { position: absolute; left: 0; top: 100px; width: 156px; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.tp-name { font: 500 15px/19px "Ferro Grotesk"; color: var(--ink-strong); text-align: center; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.tp-segs { display: flex; gap: 3px; width: 60px; height: 3px; }
+.tp-segs i { flex: 1; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.tp-segs b { display: block; height: 3px; width: 0; background: var(--ink-strong); }
+.tp-time { font: 400 15px/19px "Ferro Grotesk"; color: var(--muted); font-feature-settings: "tnum"; }
+.tp-time b { font-weight: 500; color: var(--ink-strong); }
+.tp-step { position: absolute; left: 0; top: 156px; width: 156px; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
+.tp-step i { width: 1px; height: 16px; background: #57544A; }
+.tp-step button { width: 64px; height: 36px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.tp-step button.pressed { background: #FFFFFF1F; transform: none; }
+.tp-step button[disabled] { opacity: .35; pointer-events: none; }
+
+/* ---- кружок-карта */
+.mm { position: absolute; border-radius: 50%; box-shadow: 0 5px 12px #28282840; cursor: pointer; transition: transform .28s var(--spring); }
+.mm.pressed { transform: scale(.97); }
+.mm-clip { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #EDE6D6; }
+.mm-world { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-origin: 0 0; will-change: transform; }
+.mm-layer { position: absolute; transform-origin: 0 0; transition: opacity .5s ease; }
+.mm-layer img { display: block; }
+.mm-vec { position: absolute; left: 0; top: 0; overflow: visible; }
+.mm-vec path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: opacity .4s ease; }
+.mm-route { stroke: #282828; }
+.mm-route-c { stroke: #FFFCF5; }
+.mm-later { stroke: #282828; }
+.mm-zone { fill: #F2CF4A; transition: opacity .5s ease; }
+.mm-ripples { transition: opacity .5s ease; }
+.mm-ripples .rp { fill: #F2CF4A; transform-box: fill-box; transform-origin: center; animation: ripple 2.4s ease-out infinite; }
+.mm-ripples .rp:nth-child(2) { animation-delay: .5s; }
+.mm-ripples .rp:nth-child(3) { animation: none; }
+@keyframes ripple { 0% { transform: scale(.4); opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
+.mm-labels, .mm-badges { position: absolute; left: 0; top: 0; }
+.mm-label { position: absolute; left: 0; top: 0; white-space: nowrap; font: 400 7.5px/1 "Ferro Grotesk"; letter-spacing: .08em; text-transform: uppercase; color: #6B6559; -webkit-text-stroke: 2.5px #FFFCF5; paint-order: stroke fill; transform-origin: 0 0; transition: opacity .4s ease; }
+.mm-badge { position: absolute; left: 0; top: 0; min-width: 24px; height: 24px; padding: 0 4px; border-radius: 12px; background: #282828; box-shadow: 0 0 0 2px #FFFCF5; color: #FFFCF5; font: 700 12.6px/24px "Ferro Grotesk"; text-align: center; transform-origin: 0 0; }
+.mm-badge.done { background: #CFC6B2; color: #464646; }
+.mm-glow { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: radial-gradient(circle, #F2CF4AF2 0%, #F2CF4A8C 55%, #F2CF4A00 100%); transition: opacity .6s ease; }
+.mm-aim { position: absolute; left: 0; top: 0; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, #F2CF4A 0%, #F2CF4A00 68%); transition: opacity .4s ease; }
+.mm-ring { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.mm-ring-c { fill: none; stroke: #1C1B19; }
+.mm-ticks line { stroke: #F0EADE; stroke-width: 1.2; }
+.mm-ticks line.card { stroke-width: 2.2; }
+.mm-arc { fill: none; stroke: #F2CF4A; stroke-linecap: butt; transition: opacity .4s ease; }
+.mm-disc { position: absolute; left: 0; top: 0; border-radius: 50%; background: #1C1B19; box-shadow: 0 0 0 2px #FFFCF5; color: #F0EADE; display: flex; align-items: center; justify-content: center; font: 700 10.5px/1 "Ferro Grotesk"; pointer-events: none; }
+.mm-sea { background: #2F4B5F; }
+.mm-tgt { background: #282828; color: #FFFCF5; transition: opacity .3s ease; }
+/* тёмная карта (линогравюра): светлая кромка между ободком и картой, путь жёлтый с тёмной обводкой — тёмный тонет среди светлых улиц */
+.mm.dark .mm-clip { background: #262420; box-shadow: inset 0 0 0 calc(var(--rw, 8px) + 1.5px) #EFE7D6; }
+.mm.dark .mm-route { stroke: #F2CF4A; }
+.mm.dark .mm-route-c { stroke: #262420; }
+.mm.dark .mm-later { stroke: #EFE7D6; }
+.mm-drop { position: absolute; left: 50%; top: 50%; width: 80px; height: 80px; margin: -40px 0 0 -40px; pointer-events: none; filter: drop-shadow(0 3px 3px #28282859); }
+
+/* короткое сообщение */
+.toast { position: absolute; left: 50%; bottom: 96px; transform: translate(-50%, 16px); padding: 10px 16px; border-radius: 20px; background: #1C1B19F2; color: var(--on-night); font: 500 15px/20px "Ferro Grotesk"; white-space: nowrap; opacity: 0; transition: opacity .3s ease, transform .4s var(--spring); pointer-events: none; z-index: 60; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* «Песня в дорогу» (20.11): ссылка на YouTube под названием точки, на месте подзаголовка */
+.w-song { position: absolute; left: 24px; top: 566px; height: 32px; padding: 0 12px 0 10px; border-radius: 16px; display: flex; align-items: center; gap: 7px;
+  background: var(--paper-dim); color: var(--ink-strong); font: 500 15px/20px "Ferro Grotesk"; text-decoration: none; white-space: nowrap;
+  opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .3s ease, transform .4s var(--spring); }
+.w-song.on { opacity: 1; transform: none; pointer-events: auto; }
+.walk:not([data-layout="walk"]) .w-song { display: none; }
+/* светлые картинки (рисунок Гутмана, схемы маршрута): подпись на плотной подложке, иначе текст тонет */
+.g-grad.dim { height: 150px; background: linear-gradient(0deg, #1C1B19F2 0%, #1C1B19E6 55%, #1C1B1900 100%); }
+.w-arrive { border: 0; cursor: pointer; padding: 0 8px 0 14px; }
+.w-arrive svg { width: 18px; height: 18px; }
