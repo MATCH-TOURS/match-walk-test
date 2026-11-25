@@ -244,7 +244,7 @@
     // «Песня в дорогу»: ссылка на YouTube под названием точки
     // «История в дорогу» длиннее пути: дошли раньше — «Я уже у точки», рассказ встаёт на паузу
     arrive(n) { const b = q('.w-arrive'); b.classList.toggle('on', !!n); if (n) b.querySelector('span').textContent = `Я уже у точки ${n}`; },
-    song(x) { const a = q('.w-song'); a.classList.toggle('on', !!x); if (x) { a.href = x.url; a.querySelector('span').textContent = `${x.title} · ${x.who}`; } },
+    song(x) { const a = q('a.w-song'); a.classList.toggle('on', !!x); if (x) { a.href = x.url; a.querySelector('span').textContent = `${x.title} · ${x.who}`; } },
     box: { far: { bx: 35, by: 118, size: 320 }, walk: { bx: 182, by: 612, size: 192 } }
   };
   q('.w-x').addEventListener('click', () => App.emit('ui:x'));
